@@ -1,0 +1,757 @@
+openapi: 3.0.0
+info:
+  description: API processing requests for kit creation
+  title: gect-kit-worker
+  contact:
+    name: GECT-NG
+    email: francesco.bisaccia@posteitaliane.it
+  version: "1.0"
+paths:
+  "/api/v1/kit/cliente/{num_pratica}":
+    x-symphony:
+      # group-id: used for gin groups.
+      group-path: "/api/v1"
+    get:
+      x-symphony:
+        # id: orchestration-id
+        id: "get-by-numero-pratica"
+      description: retrieve  info of the last kit request by num_pratica
+      tags:
+        - kit cliente
+      summary: retrieve  info of the last kit request by num_pratica
+      parameters:
+        - description: num_pratica the request
+          name: num_pratica
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.GetKitClienteResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      info:
+                        requestId: 718527dd-9f10-4b42-bb74-3fc4e0ffea46
+                        resultCode: PI_7W_200 (200)
+                        resultMessage: Success
+                    kit:
+                      ambito: ambito
+                      famiglia: famiglia
+                      id: IdUnivocoKIT
+                      kit-file: prodotto_numeropratica_timestamp.zip
+                      metadata:
+                        additionalProp1: {}
+                      prodotto: prodotto
+                      ref-date: 2022-03-13T19:00:16+01:00
+                      status: status
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: request-validation
+                          message: error message
+                          scope: GECT-NG
+                      requestId: 77451cfe-6d6b-46a9-942f-76bb844fd121
+                      resultCode: PI_7W_400
+                      resultMessage: Bad Request
+        "404":
+          description: Resource Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: resource-not-found
+                          message: resource not found
+                          scope: GECT-NG
+                      requestId: 27b10000-6bbd-4bb2-90ab-5d2e999ca8b6
+                      resultCode: PI_7W_404
+                      resultMessage: Resource Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: server-error
+                          message: error message
+                          scope: GECT-NG
+                      requestId: 27b10000-6bbd-4bb2-90ab-5d2e999ca8b6
+                      resultCode: PI_7W_500
+                      resultMessage: Internal Server Error
+    put:
+      x-symphony:
+        # id: orchestration-id
+        id: "put-by-numero-pratica"
+      description: Update a previous request made on num-pratica.
+      tags:
+        - kit cliente
+      summary: Update a previous request made on num-pratica.
+      parameters:
+        - description: num pratica to update
+          name: num_pratica
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/api.KitRequest"
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      requestId: 3f60b110-deca-416a-81d9-c44c8844415c
+                      resultCode: PI_7W_202
+                      resultMessage: Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: request-validation
+                          message: error message
+                          scope: GECT-NG
+                      requestId: 77451cfe-6d6b-46a9-942f-76bb844fd121
+                      resultCode: PI_7W_400
+                      resultMessage: Bad Request
+        "404":
+          description: Resource Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: resource-not-found
+                          message: resource not found
+                          scope: GECT-NG
+                      requestId: 27b10000-6bbd-4bb2-90ab-5d2e999ca8b6
+                      resultCode: PI_7W_404
+                      resultMessage: Resource Not Found
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: too-many-requests
+                          message: too many requests
+                          scope: GECT-NG
+                      requestId: 27b10000-6bbd-4bb2-90ab-5d2e999ca8b6
+                      resultCode: PI_7W_429
+                      resultMessage: Too Many Requests
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: server-error
+                          message: error message
+                          scope: GECT-NG
+                      requestId: 27b10000-6bbd-4bb2-90ab-5d2e999ca8b6
+                      resultCode: PI_7W_500
+                      resultMessage: Internal Server Error
+    post:
+      description: Submit a request to create a package out of a list of documents.
+      tags:
+        - kit cliente
+      summary: Submit a request to create a package out of a list of documents.
+      parameters:
+        - description: num pratica for the request
+          name: num_pratica
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/api.KitRequest"
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      requestId: 3f60b110-deca-416a-81d9-c44c8844415c
+                      resultCode: PI_7W_202
+                      resultMessage: Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: request-validation
+                          message: error message
+                          scope: GECT-NG
+                      requestId: 77451cfe-6d6b-46a9-942f-76bb844fd121
+                      resultCode: PI_7W_400
+                      resultMessage: Bad Request
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: too-many-requests
+                          message: too many requests
+                          scope: GECT-NG
+                      requestId: 27b10000-6bbd-4bb2-90ab-5d2e999ca8b6
+                      resultCode: PI_7W_429
+                      resultMessage: Too Many Requests
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: server-error
+                          message: error message
+                          scope: GECT-NG
+                      requestId: 27b10000-6bbd-4bb2-90ab-5d2e999ca8b6
+                      resultCode: PI_7W_500
+                      resultMessage: Internal Server Error
+  "/api/v1/kit/webtop/{user_id}":
+    get:
+      x-symphony:
+        # id: orchestration-id
+        id: "get-by-user-id"
+      description: Get list of kit requests byt userId
+      tags:
+        - kit webtop
+      summary: Get list of kit requests byt userId
+      parameters:
+        - description: user for the request
+          name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/api.GetWebTopKitsResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      info:
+                        requestId: 718527dd-9f10-4b42-bb74-3fc4e0ffea46
+                        resultCode: PI_7W_200 (200)
+                        resultMessage: Success
+                    kits:
+                      - ambito: ambito
+                        famiglia: famiglia
+                        id: IdUnivocoKIT
+                        kit-file: prodotto_numeropratica_timestamp.zip
+                        metadata:
+                          additionalProp1: {}
+                        num-pratica: numero pratica
+                        prodotto: prodotto
+                        ref-date: 2022-03-13T19:00:16+01:00
+                        status: status
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: request-validation
+                          message: error message
+                          scope: GECT-NG
+                      requestId: 77451cfe-6d6b-46a9-942f-76bb844fd121
+                      resultCode: PI_7W_400
+                      resultMessage: Bad Request
+        "404":
+          description: Resource Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: resource-not-found
+                          message: resource not found
+                          scope: GECT-NG
+                      requestId: 27b10000-6bbd-4bb2-90ab-5d2e999ca8b6
+                      resultCode: PI_7W_404
+                      resultMessage: Resource Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: server-error
+                          message: error message
+                          scope: GECT-NG
+                      requestId: 27b10000-6bbd-4bb2-90ab-5d2e999ca8b6
+                      resultCode: PI_7W_500
+                      resultMessage: Internal Server Error
+    post:
+      description: Submit a request to create a webtop kit out of a list of documents.
+      tags:
+        - kit webtop
+      summary: Submit a request to create a webtop kit out of a list of documents.
+      parameters:
+        - description: user id for the request
+          name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/api.KitRequest"
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      requestId: 3f60b110-deca-416a-81d9-c44c8844415c
+                      resultCode: PI_7W_202
+                      resultMessage: Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: request-validation
+                          message: error message
+                          scope: GECT-NG
+                      requestId: 77451cfe-6d6b-46a9-942f-76bb844fd121
+                      resultCode: PI_7W_400
+                      resultMessage: Bad Request
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: too-many-requests
+                          message: too many requests
+                          scope: GECT-NG
+                      requestId: 27b10000-6bbd-4bb2-90ab-5d2e999ca8b6
+                      resultCode: PI_7W_429
+                      resultMessage: Too Many Requests
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: server-error
+                          message: error message
+                          scope: GECT-NG
+                      requestId: 27b10000-6bbd-4bb2-90ab-5d2e999ca8b6
+                      resultCode: PI_7W_500
+                      resultMessage: Internal Server Error
+  "/api/v1/kit/webtop/{user_id}/{request_id}/{status}":
+    put:
+      description: Update status of a kit webtop request
+      tags:
+        - kit webtop
+      summary: Update status of a kit webtop request
+      parameters:
+        - description: user for the request
+          name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - description: request related to user
+          name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - description: updated status
+          name: status
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      requestId: 3f60b110-deca-416a-81d9-c44c8844415c
+                      resultCode: PI_7W_200
+                      resultMessage: OK
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: request-validation
+                          message: error message
+                          scope: GECT-NG
+                      requestId: 77451cfe-6d6b-46a9-942f-76bb844fd121
+                      resultCode: PI_7W_400
+                      resultMessage: Bad Request
+        "404":
+          description: Resource Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: resource-not-found
+                          message: resource not found
+                          scope: GECT-NG
+                      requestId: 27b10000-6bbd-4bb2-90ab-5d2e999ca8b6
+                      resultCode: PI_7W_404
+                      resultMessage: Resource Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.InfoResponse"
+              examples:
+                response:
+                  value:
+                    info:
+                      details:
+                        - code: server-error
+                          message: error message
+                          scope: GECT-NG
+                      requestId: 27b10000-6bbd-4bb2-90ab-5d2e999ca8b6
+                      resultCode: PI_7W_500
+                      resultMessage: Internal Server Error
+components:
+  requestBodies:
+    api.KitRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/api.KitRequest"
+      description: create kit export request
+      required: true
+  schemas:
+    api.Address:
+      type: object
+    api.Document:
+      type: object
+      properties:
+        content-info:
+          $ref: "#/components/schemas/api.FileInfo"
+        doc-id:
+          type: string
+        doc-name:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        type:
+          type: string
+          example: doc | dms
+    api.EmailChannel:
+      type: object
+      properties:
+        body:
+          type: string
+          example: ZXhhbXBsZQ==
+        from:
+          $ref: "#/components/schemas/api.Recipient"
+        pec:
+          type: boolean
+        reply-to:
+          $ref: "#/components/schemas/api.Recipient"
+        subject:
+          type: string
+          example: oggetto della mail
+        to:
+          type: array
+          items:
+            $ref: "#/components/schemas/api.Recipient"
+    api.FileInfo:
+      type: object
+      properties:
+        content-length:
+          type: integer
+        content-type:
+          type: string
+        pages:
+          type: integer
+        url:
+          type: string
+    api.GetKitClienteResponse:
+      type: object
+      properties:
+        info:
+          $ref: "#/components/schemas/response.InfoResponse"
+        kit:
+          $ref: "#/components/schemas/api.KitClienteInfoResponse"
+    api.GetWebTopKitsResponse:
+      type: object
+      properties:
+        info:
+          $ref: "#/components/schemas/response.InfoResponse"
+        kits:
+          type: array
+          items:
+            $ref: "#/components/schemas/api.KitWebTopInfoResponse"
+    api.KitClienteInfoResponse:
+      type: object
+      properties:
+        ambito:
+          type: string
+          example: ambito
+        famiglia:
+          type: string
+          example: famiglia
+        id:
+          type: string
+          example: IdUnivocoKIT
+        kit-file:
+          type: string
+          example: kit-file
+        metadata:
+          type: object
+          additionalProperties: true
+        prodotto:
+          type: string
+          example: prodotto
+        ref-date:
+          type: string
+          example: 2022-03-13T19:00:16+01:00
+        status:
+          type: string
+          example: status
+    api.KitRequest:
+      type: object
+      properties:
+        ambito:
+          type: string
+          example: ambito
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/api.Document"
+        famiglia:
+          type: string
+          example: famiglia
+        id:
+          type: string
+          example: IdUnivocoKIT
+        metadata:
+          type: object
+          additionalProperties: true
+        notifications:
+          $ref: "#/components/schemas/api.Notifications"
+        num-pratica:
+          type: string
+          example: num-pratica
+        prodotto:
+          type: string
+          example: prodotto
+    api.KitWebTopInfoResponse:
+      type: object
+      properties:
+        ambito:
+          type: string
+          example: ambito
+        famiglia:
+          type: string
+          example: famiglia
+        id:
+          type: string
+          example: IdUnivocoKIT
+        kit-file:
+          type: string
+          example: kit-file
+        metadata:
+          type: object
+          additionalProperties: true
+        num-pratica:
+          type: string
+          example: num-pratica
+        prodotto:
+          type: string
+          example: prodotto
+        ref-date:
+          type: string
+          example: 2022-03-13T19:00:16+01:00
+        status:
+          type: string
+          example: status
+    api.Notifications:
+      type: object
+      properties:
+        channel:
+          type: string
+          example: mail
+        email:
+          $ref: "#/components/schemas/api.EmailChannel"
+        postal:
+          $ref: "#/components/schemas/api.PostalChannel"
+    api.PostalChannel:
+      type: object
+      properties:
+        address:
+          $ref: "#/components/schemas/api.Address"
+    api.Recipient:
+      type: object
+      properties:
+        alias:
+          type: string
+        e-mail:
+          type: string
+    response.Detail:
+      type: object
+      properties:
+        code:
+          type: string
+          example: type of error
+        message:
+          type: string
+          example: description of error
+        scope:
+          type: string
+          example: GECT-NG
+    response.Info:
+      type: object
+      properties:
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/response.Detail"
+        requestId:
+          type: string
+          example: 718527dd-9f10-4b42-bb74-3fc4e0ffea46
+        resultCode:
+          type: string
+          example: PI_7W_200 (200) | PI_7W_202 (202) | PI_7W_400 (400) | PI_7W_404
+            (404) | PI_7W_429 (429) | PI_7W_500 (500)
+        resultMessage:
+          type: string
+          example: description of status code
+    response.InfoResponse:
+      type: object
+      properties:
+        info:
+          $ref: "#/components/schemas/response.Info"

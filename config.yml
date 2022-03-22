@@ -3,6 +3,11 @@ log:
   enablejson: false
 
 config:
+  registry:
+    crawler:
+      type: file
+      mount-point: examples/example-002
+
   http:
     bind-address: localhost
     port: 8080
@@ -23,8 +28,8 @@ config:
       - gin-mw-tracing
       - gin-mw-error
 
-    mw-handler-registry:
-      gin-mw-metrics:
-      gin-mw-tracing:
-      gin-mw-error:
-        disclose-error-info: true
+  mw-handler-registry:
+     gin-mw-metrics:
+     gin-mw-tracing:
+     gin-mw-error:
+       disclose-error-info: true

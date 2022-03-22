@@ -1,0 +1,479 @@
+---
+openapi: 3.0.0
+info:
+  title: Microservizio Communication Orchestrator
+  description: Microservizio per l'invio di comunicazioni digitali (Mail, SMS)
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.14
+servers:
+- url: /
+tags:
+- name: sendNotification
+paths:
+  /v1/send_notification:
+    post:
+      x-symphony:
+        id: "send-notification"
+      tags:
+      - sendNotification
+      summary: Invio comunicazioni digitali
+      description: Invio comunicazioni digitali
+      operationId: feu2communicationOrchestrator_35
+      parameters:
+      - name: Content-Encoding
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - identity
+      - name: Accept
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - application/json
+      - name: Content-Type
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          enum:
+          - application/json
+      - name: PI-Correlation-Id
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/PI-Correlation-Id'
+      - name: PI-Request-Id
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/PI-Request-Id'
+      - name: PI-Source
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/PI-Source'
+      - name: PI-Channel
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/PI-Channel'
+      - name: PI-Timestamp
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/PI-Timestamp'
+      - name: PI-BusinessObject-Id
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/PI-BusinessObject-Id'
+      - name: PI-Target
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/PI-Target'
+      - name: PI-ProcessCode
+        in: header
+        required: false
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/PI-ProcessCode'
+      - name: PI-CompanyName
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/PI-CompanyName'
+      requestBody:
+        description: Send notification
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendNotificationRequest'
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendNotificationResponse'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    PI-Correlation-Id:
+      type: string
+      description: Identificativo della richiesta
+      example: 96c5f267-29e0-4a28-9f38-ff3c164f5641
+    PI-Request-Id:
+      type: string
+      description: Identificativo della richiesta.
+      example: 7f59deae-f97e-49cc-bd76-a0f90f065946
+    PI-Source:
+      type: string
+      description: Identificativo del sistema mittente.
+      example: FEU
+    PI-Channel:
+      type: string
+      description: Canale vendita.
+      example: UP
+    PI-BusinessObject-Id:
+      type: string
+      description: Identificativo tecnico della pratica (business key generata dal SourceSystem)
+      example: 92770580-0119-3000-200103470000047
+    PI-Timestamp:
+      type: string
+      description: Timestamp dell'invio della richiesta.
+      example: 2021-03-30T15:13:04.982+0000
+    PI-Target:
+      type: string
+      description: Identificativo del sistema destinatario
+      example: FEU
+    PI-ProcessCode:
+      type: string
+      description: Identificativo del processo del dossier
+      example: ATT01
+    PI-CompanyName:
+      type: string
+      description: Identificativo della Company
+      example: PI
+    SendNotificationRequest:
+      required:
+      - communicationChannels
+      type: object
+      properties:
+        dossierCode:
+          type: string
+        business:
+          $ref: '#/components/schemas/Business'
+        communicationChannels:
+          type: array
+          items:
+            type: string
+            description: S=SMS, M=MAIL, P=PUSH NOTIFICATION, B=BACHECA
+            enum:
+            - S
+            - M
+            - P
+            - B
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+        customer:
+          $ref: '#/components/schemas/Customer'
+        communicationOptions:
+          $ref: '#/components/schemas/CommunicationOptions'
+    SendNotificationResponse:
+      required:
+      - result
+      type: object
+      properties:
+        result:
+          type: string
+          enum:
+          - OK
+          - KO
+        mailAccessToken:
+          type: string
+          description: Opzionale, è il token di accesso per il servizio di verifica dell'OTP inserito nella mail richiesta.
+        smsAccessToken:
+          type: string
+          description: Opzionale, è il token di accesso per il servizio di verifica dell'OTP inserito nell'SMS richiesto.
+        mailMessageId:
+          type: string
+          description: Opzionale, è l'id dell'email inviata. Nel caso di email di tipo PEC può essere utilizzato per reperire (tramite API opportuna) la ricevuta associata all'invio PEC.
+        smsMessageId:
+          type: string
+          description: Opzionale, è l'id dell'SMS inviato.
+    ErrorResponse:
+      required:
+      - result
+      type: object
+      properties:
+        result:
+          type: string
+          example: KO
+          enum:
+          - OK
+          - KO
+        description:
+          maxLength: 250
+          type: string
+        errorCode:
+          maxLength: 24
+          type: string
+    Business:
+      required:
+      - monitoringInfo
+      - type
+      type: object
+      properties:
+        type:
+          type: string
+          description: tipologia business
+          example: Energy
+        monitoringInfo:
+          type: string
+          description: Tracing comunicazione e2e
+    Customer:
+      type: object
+      properties:
+        taxData:
+          $ref: '#/components/schemas/Customer_taxData'
+        idAUC:
+          type: string
+          description: Id AUC Cliente
+        userId:
+          type: string
+          description: Id Utente
+    CommunicationOptions:
+      type: object
+      properties:
+        commType:
+          type: string
+          description: tipologia di comunicazione inviata (reclamo, sollecito)
+          example: Sollecito
+        smsOptions:
+          $ref: '#/components/schemas/SmsOptions'
+        mailOptions:
+          $ref: '#/components/schemas/MailOptions'
+    MailOptions:
+      required:
+      - body
+      - recipients
+      type: object
+      properties:
+        sender:
+          $ref: '#/components/schemas/MailOptionsSender'
+        recipients:
+          $ref: '#/components/schemas/MailOptionsRecipients'
+        subject:
+          type: string
+          description: subject della mail, codificato in base64
+          format: byte
+        archive:
+          type: boolean
+          description: flag per richiedere l'archiviazione della comunicazione
+          default: false
+        pec:
+          type: boolean
+          description: flag per richiedere l'invio di una email di tipo PEC
+          default: false
+        attributes:
+          type: array
+          additionalProperties: false
+          description: attributi della comunicazione.
+          items:
+            $ref: '#/components/schemas/ExtendedAttribute'
+          x-nullable: true
+        body:
+          $ref: '#/components/schemas/MailBody'
+        otp:
+          $ref: '#/components/schemas/OtpOptions'
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+    SmsOptions:
+      required:
+      - body
+      - phoneNumber
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          description: numero di telefono del destinatario SMS
+        countryCode:
+          type: string
+          description: codice che identifica la lista di appartenenza del numero di telefono del destinatario. La lista completa è al seguente link https://gitlab.alm.poste.it/DAS/common/sms-sender#country-code
+          default: IT
+        body:
+          $ref: '#/components/schemas/SmsBody'
+        otp:
+          $ref: '#/components/schemas/OtpOptions'
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+    MailBody:
+      oneOf:
+      - $ref: '#/components/schemas/Template'
+      - $ref: '#/components/schemas/Content'
+    SmsBody:
+      oneOf:
+      - $ref: '#/components/schemas/Template'
+      - $ref: '#/components/schemas/Content'
+    Template:
+      type: object
+      properties:
+        templateId:
+          type: string
+          description: id del template del messaggio (e-mail o sms) da inviare
+    Content:
+      type: object
+      properties:
+        content:
+          type: string
+          description: contenuto del messaggio, codificato in base64
+          format: byte
+    Attachment:
+      required:
+      - destination
+      - files
+      type: object
+      properties:
+        documentId:
+          type: string
+          description: guid del documentId
+          example: 3028a56e-ec5d-43a6-sqq1-d82961f230b6
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttachmentsLink'
+    AttachmentsLink:
+      required:
+      - atchLink
+      - atchName
+      - atchType
+      type: object
+      properties:
+        atchLink:
+          type: string
+          description: url presigned dell'allegato in formato base64, obbligatorio se non viene passato il content
+          format: byte
+        atchType:
+          type: string
+          description: content type dell'allegato
+        atchName:
+          type: string
+          description: nome del file allegato
+    MailOptionsSender:
+      required:
+      - senderFrom
+      type: object
+      properties:
+        senderFrom:
+          type: string
+          description: indirizzo completo del mittente, di dominio ammesso
+        senderAlias:
+          type: string
+          description: alias visualizzato nella mail
+    MailOptionsRecipients:
+      required:
+      - to
+      type: object
+      properties:
+        to:
+          type: array
+          items:
+            type: string
+            description: destinatari in TO
+            format: email
+        cc:
+          type: array
+          items:
+            type: string
+            description: destinatari in CC
+            format: email
+        bcc:
+          type: array
+          items:
+            type: string
+            description: destinatari in CCN
+            format: email
+    ExtendedAttribute:
+      required:
+      - key
+      - value
+      type: object
+      properties:
+        key:
+          type: object
+          additionalProperties: false
+          x-nullable: true
+        value:
+          type: object
+          additionalProperties: false
+          x-nullable: true
+        group:
+          type: object
+          additionalProperties: false
+          x-nullable: true
+        options:
+          $ref: '#/components/schemas/ExtendedAttrOptions'
+      additionalProperties: false
+      description: Attributi Chiave/Valore/options.
+      x-nullable: true
+    OtpOptions:
+      type: object
+      description: Se questa sezione è presente, il messaggio (email o sms) viene arricchito con la generazione di un OTP
+      properties:
+        otpType:
+          type: string
+          description: Opzionale, rappresenta la tipologia di OTP da includere. Se valorizzato, puo' assumere i valori HOTP o TOTP.
+          default: HOTP
+        otpPlaceholder:
+          type: string
+          description: Opzionale, rappresenta il placeholder contenuto nel body del messaggio che deve essere sostituito con il valore dell'OTP generato
+          default: ${OTP}
+    Metadata:
+      type: object
+      description: metadati per la risoluzione di eventuali placeholder presenti in mail/sms body template, mail subject
+      additionalProperties:
+        type: string
+
+    ExtendedAttrOptions:
+      type: object
+      properties:
+        searchable:
+          type: object
+          additionalProperties: false
+          description: Flag che indica se ricercabile
+          x-nullable: true
+      additionalProperties: false
+      description: Opzioni per gestire le chiavi addizionali.
+      x-nullable: true
+    Customer_taxData:
+      type: object
+      properties:
+        taxCode:
+          type: string
+          description: Codice Fiscale cliente
+        vatNumber:
+          type: string
+          description: Partita Iva cliente

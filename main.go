@@ -11,6 +11,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"tpm-symphony/api"
+	"tpm-symphony/registry"
 )
 
 //go:embed sha.txt
@@ -34,6 +36,14 @@ func main() {
 	}
 
 	log.Info().Interface("config", appCfg).Msg("configuration loaded")
+
+	reg, err := registry.LoadRegistry(&appCfg.Registry)
+	if nil != err {
+		log.Fatal().Err(err).Send()
+	}
+	reg.ShowInfo()
+
+	api.RegisterEndpoints(reg)
 
 	jc, err := InitGlobalTracer()
 	if nil != err {

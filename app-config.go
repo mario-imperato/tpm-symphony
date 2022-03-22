@@ -10,11 +10,13 @@ import (
 	"gitlab.alm.poste.it/go/configuration"
 	"os"
 	"strings"
+	"tpm-symphony/registry"
 )
 
 type AppConfig struct {
-	Http       httpsrv.Config
-	MwRegistry map[string]interface{} `yaml:"mw-handler-registry" mapstructure:"mw-handler-registry"`
+	Registry   registry.Config                     `yaml:"registry" mapstructure:"registry" json:"registry"`
+	Http       httpsrv.Config                      `yaml:"http" mapstructure:"http" json:"http"`
+	MwRegistry *middleware.MwHandlerRegistryConfig `yaml:"mw-handler-registry" mapstructure:"mw-handler-registry" json:"mw-handler-registry"`
 }
 
 // Default config file.
@@ -64,9 +66,29 @@ func ReadConfig() (*AppConfig, error) {
 
 func (m *AppConfig) GetDefaults() []configuration.VarDefinition {
 	vd := make([]configuration.VarDefinition, 0, 20)
-	vd = append(vd, httpsrv.GetConfigDefaults()...)
-	vd = append(vd, middleware.GetConfigDefaults("config.mw-handler-registry")...)
+	vd = append(vd, GetHttpSrvConfigDefaults()...)
+	vd = append(vd, GetMiddlewareConfigDefaults("config.mw-handler-registry")...)
 	return vd
+}
+
+func GetHttpSrvConfigDefaults() []configuration.VarDefinition {
+	return []configuration.VarDefinition{
+		{"config.http.bind-address", httpsrv.DefaultBindAddress, "host reference"},
+		{"config.http.server-context.path", httpsrv.DefaultContextPath, "context-path"},
+		{"config.http.port", httpsrv.DefaultListenPort, "port"},
+		{"config.http.shutdown-timeout", httpsrv.DefaultShutdownTimeout, "shutdown timeout"},
+		{"config.http.server-mode", httpsrv.DefaultServerMode, "modalita' di lavoro server gin"},
+	}
+}
+
+func GetMiddlewareConfigDefaults(contextPath string) []configuration.VarDefinition {
+	return []configuration.VarDefinition{
+		{strings.Join([]string{contextPath, middleware.MiddlewareErrorId, "disclose-error-info"}, "."), middleware.MiddlewareErrorDefaultDiscoleInfo, "error is in clear"},
+		{strings.Join([]string{contextPath, middleware.MiddlewareTracingId, "alphabet"}, "."), middleware.MiddlewareTracingDefaultAlphabet, "alphabet"},
+		{strings.Join([]string{contextPath, middleware.MiddlewareTracingId, "spantag"}, "."), middleware.MiddlewareTracingDefaultSpanTag, "spantag"},
+		{strings.Join([]string{contextPath, middleware.MiddlewareTracingId, "header"}, "."), middleware.MiddlewareTracingDefaultHeader, "header"},
+		{strings.Join([]string{contextPath, middleware.MiddlewareMetricsPromHttpId, "header"}, "."), middleware.MiddlewareTracingDefaultHeader, "header"},
+	}
 }
 
 func (m *AppConfig) PostProcess() error {
