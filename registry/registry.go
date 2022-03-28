@@ -1,13 +1,13 @@
 package registry
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/rs/zerolog/log"
 	"net/http"
-	"strings"
+	"tpm-symphony/constants"
 	"tpm-symphony/registry/crawler"
 )
 
@@ -21,101 +21,104 @@ func LoadRegistry(cfg *Config) (*OrchestrationRegistry, error) {
 
 	theRegistry = OrchestrationRegistry{}
 
-	oapi, _, err := crawler.Crawl(&cfg.CrawlerCfg)
+	orchs, err := crawler.Crawl(&cfg.CrawlerCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	if oapi.IsZero() {
+	if len(orchs) == 0 {
 		return nil, fmt.Errorf("no orchestrations found in %s", cfg.CrawlerCfg.MountPoint)
 	}
 
-	log.Info().Str("file-name", oapi.Path).Msg("found openapi file")
+	for _, repo := range orchs {
 
-	doc, err := openapi3.NewLoader().LoadFromFile(oapi.Path)
-	if err != nil {
-		return nil, err
-	}
+		oapiName, oapiContent, err := repo.GetOpenApiData()
+		log.Info().Str(constants.SemLogPath, repo.GetPath()).Str("name", oapiName).Msg("found openapi file")
+		doc, err := openapi3.NewLoader().LoadFromData(oapiContent)
+		if err != nil {
+			return nil, err
+		}
 
-	theRegistry.OpenapiDoc = doc
-	theRegistry.OpenApiFile = oapi.Path
-	for pi, pv := range doc.Paths {
-		pathInfo, oinfos := retrieveSymphonyPathExtension(pi, pv)
-		if len(oinfos) == 0 {
-			log.Warn().Str("url", pi).Msg("openapi info without symphony information")
-		} else {
-			for _, op := range oinfos {
-				theRegistry.AddResource(
-					ResourceGroup{
-						Name: pathInfo.GroupPath,
-						Path: pathInfo.GroupPath,
-					},
-					Resource{
-						Name:       op.Id,
-						Path:       pathInfo.OpPath,
-						Method:     op.HttpMethod,
-						SymphonyId: op.Id,
-					})
+		err = doc.Validate(context.Background())
+		if err != nil {
+			return nil, err
+		}
+
+		entry := Entry{OpenapiDoc: doc, Repo: repo, ResourceGroup: retrieveResourceGroup(doc)}
+		for pi, pv := range doc.Paths {
+			oinfos := retrieveSymphonyPathExtension(pi, pv)
+			if len(oinfos) == 0 {
+				log.Warn().Str("url", pi).Msg("openapi info without symphony information...skipping")
+			} else {
+				for _, op := range oinfos {
+
+					entry.AddResource(
+						Resource{
+							Name:       op.Id,
+							Path:       pi,
+							Method:     op.HttpMethod,
+							SymphonyId: op.Id,
+						})
+				}
 			}
 		}
+
+		theRegistry.Entries = append(theRegistry.Entries, entry)
 	}
 
 	return &theRegistry, nil
 }
 
-func retrieveSymphonyPathExtension(pi string, pv *openapi3.PathItem) (SymphonyPathExtension, []SymphonyOperationExtension) {
+func retrieveResourceGroup(doc *openapi3.T) ResourceGroup {
+	if len(doc.Servers) > 0 {
+		return ResourceGroup{Name: doc.Servers[0].URL, Path: doc.Servers[0].URL}
+	}
 
-	var pathExt SymphonyPathExtension
-	if pv != nil && pv.Extensions != nil {
-		v, ok := pv.Extensions["x-symphony"]
-		if ok {
-			jr, ok := v.(json.RawMessage)
+	return ResourceGroup{}
+}
+
+func retrieveSymphonyPathExtension(pi string, pv *openapi3.PathItem) []SymphonyOperationExtension {
+
+	/*
+		var pathExt SymphonyPathExtension
+		if pv != nil && pv.Extensions != nil {
+			v, ok := pv.Extensions["x-symphony"]
 			if ok {
-				err := jsoniter.Unmarshal(jr, &pathExt)
-				if err != nil {
-					log.Error().Err(err).Msg("wrong sid")
+				jr, ok := v.(json.RawMessage)
+				if ok {
+					err := jsoniter.Unmarshal(jr, &pathExt)
+					if err != nil {
+						log.Error().Err(err).Msg("wrong sid")
+					}
 				}
 			}
 		}
-	}
 
-	pathExt.OpPath = pi
-	if len(pathExt.GroupPath) > 0 && pathExt.GroupPath != "/" {
-		if strings.HasPrefix(pi, pathExt.GroupPath) {
+
+		pathExt.OpPath = pi
+		if len(pathExt.GroupPath) > 0 && pathExt.GroupPath != "/" {
+			if strings.HasPrefix(pi, pathExt.GroupPath) {
+				pathExt.OpPath = strings.TrimPrefix(pi, pathExt.GroupPath)
+			}
+		} else if strings.HasPrefix(pi, "/api/v1") {
+			pathExt.GroupPath = "/api/v1"
 			pathExt.OpPath = strings.TrimPrefix(pi, pathExt.GroupPath)
 		}
-	} else if strings.HasPrefix(pi, "/api/v1") {
-		pathExt.GroupPath = "/api/v1"
-		pathExt.OpPath = strings.TrimPrefix(pi, pathExt.GroupPath)
-	}
+	*/
 
 	var oinfo []SymphonyOperationExtension
-	oi := retrieveSymphonyOperationExtension(http.MethodGet, pv.Get)
-	if !oi.IsZero() {
-		oinfo = append(oinfo, oi)
-	} else {
-		warnForMissingSymphonyInfo(http.MethodGet, pi, pv.Get)
-	}
-	oi = retrieveSymphonyOperationExtension(http.MethodPut, pv.Put)
-	if !oi.IsZero() {
-		oinfo = append(oinfo, oi)
-	} else {
-		warnForMissingSymphonyInfo(http.MethodPut, pi, pv.Put)
-	}
-	oi = retrieveSymphonyOperationExtension(http.MethodPost, pv.Post)
-	if !oi.IsZero() {
-		oinfo = append(oinfo, oi)
-	} else {
-		warnForMissingSymphonyInfo(http.MethodPost, pi, pv.Post)
-	}
-	oi = retrieveSymphonyOperationExtension(http.MethodDelete, pv.Delete)
-	if !oi.IsZero() {
-		oinfo = append(oinfo, oi)
-	} else {
-		warnForMissingSymphonyInfo(http.MethodDelete, pi, pv.Delete)
+	httpMethods := []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete}
+	for _, m := range httpMethods {
+		op := pv.GetOperation(m)
+		oi := retrieveSymphonyOperationExtension(m, op)
+		if !oi.IsZero() {
+			oinfo = append(oinfo, oi)
+		} else {
+			warnForMissingSymphonyInfo(m, pi, op)
+		}
 	}
 
-	return pathExt, oinfo
+	return oinfo
 }
 
 func warnForMissingSymphonyInfo(httpMethod string, path string, op *openapi3.Operation) {
@@ -146,18 +149,13 @@ func retrieveSymphonyOperationExtension(method string, op *openapi3.Operation) S
 	return SymphonyOperationExtension{}
 }
 
-func (reg *OrchestrationRegistry) AddResource(group ResourceGroup, res Resource) {
+func (reg *Entry) AddResource(res Resource) {
 
-	gndx := reg.FindGroupByPath(group.Path)
-	if gndx < 0 {
-		reg.ResourceGroups = append(reg.ResourceGroups, group)
-		gndx = 0
-	}
-
-	reg.ResourceGroups[gndx].Resources = append(reg.ResourceGroups[gndx].Resources, res)
+	reg.Resources = append(reg.Resources, res)
 }
 
-func (reg *OrchestrationRegistry) FindGroupByPath(p string) int {
+/*
+func (reg *Entry) FindGroupByPath(p string) int {
 	for i := range reg.ResourceGroups {
 		if reg.ResourceGroups[i].Path == p {
 			return i
@@ -166,19 +164,20 @@ func (reg *OrchestrationRegistry) FindGroupByPath(p string) int {
 
 	return -1
 }
+*/
 
 func (reg *OrchestrationRegistry) ShowInfo() {
-	log.Info().Str("from", reg.OpenApiFile).Str("open-api-ver", reg.OpenapiDoc.OpenAPI).Msg("loaded openapi spec")
 
-	for _, g := range reg.ResourceGroups {
-		log.Info().Int("num-resources", len(g.Resources)).Str("path", g.Path).Str("name", g.Name).Msg("resource group")
-		for _, r := range g.Resources {
-			/*
-				Bad in log string....
-				ginVarFormatter := func(s string) string { return ":" + s }
-				ginPath, _ := varResolver.ResolveVariables(r.Path, varResolver.SimpleVariableReference, ginVarFormatter)
-			*/
-			log.Info().Str("path", r.Path).Str("name", r.Name).Str("method", r.Method).Str("sid", r.SymphonyId).Msg("openapi path references orchestrations")
+	for _, e := range reg.Entries {
+		e.Repo.ShowInfo()
+	}
+
+	for _, e := range reg.Entries {
+		log.Info().Str(constants.SemLogPath, e.Repo.GetPath()).Str("open-api-ver", e.OpenapiDoc.OpenAPI).Msg("open api info")
+		g := e.ResourceGroup
+		log.Info().Int("num-resources", len(e.Resources)).Str(constants.SemLogPath, g.Path).Str(constants.SemLogName, g.Name).Msg("resource group")
+		for _, r := range e.Resources {
+			log.Info().Str(constants.SemLogPath, r.Path).Str(constants.SemLogName, r.Name).Str(constants.SemLogMethod, r.Method).Str(constants.SemLogOrchestrationSid, r.SymphonyId).Msg("openapi path references orchestrations")
 		}
 	}
 }

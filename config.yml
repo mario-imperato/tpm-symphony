@@ -6,7 +6,7 @@ config:
   registry:
     crawler:
       type: file
-      mount-point: examples/example-002
+      mount-point: examples/ex-bpap-verifica
 
   http:
     bind-address: localhost

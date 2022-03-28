@@ -31,13 +31,17 @@ type Resource struct {
 }
 
 type ResourceGroup struct {
-	Name      string     `yaml:"name" mapstructure:"name" json:"name"`
-	Path      string     `yaml:"path" mapstructure:"path" json:"path" `
-	Resources []Resource `yaml:"resources" mapstructure:"resources" json:"resources"`
+	Name string `yaml:"name" mapstructure:"name" json:"name"`
+	Path string `yaml:"path" mapstructure:"path" json:"path" `
+}
+
+type Entry struct {
+	Repo          crawler.OrchestrationRepo
+	OpenapiDoc    *openapi3.T
+	ResourceGroup ResourceGroup `yaml:"resource-group" mapstructure:"resource-group" json:"resource-group"`
+	Resources     []Resource    `yaml:"resources" mapstructure:"resources" json:"resources"`
 }
 
 type OrchestrationRegistry struct {
-	OpenApiFile    string
-	OpenapiDoc     *openapi3.T
-	ResourceGroups []ResourceGroup `yaml:"resource-groups" mapstructure:"resource-groups" json:"resource-groups"`
+	Entries []Entry `yaml:"entries" mapstructure:"entries" json:"entries"`
 }

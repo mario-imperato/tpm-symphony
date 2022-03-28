@@ -1,10 +1,8 @@
 package crawler
 
 import (
-	"io/ioutil"
-	"os"
+	"github.com/mario-imperato/tpm-common/util"
 	"path"
-	"regexp"
 )
 
 type Config struct {
@@ -12,52 +10,91 @@ type Config struct {
 	MountPoint string `yaml:"mount-point" mapstructure:"mount-point" json:"mount-point"`
 }
 
-type Asset struct {
-	Type string `yaml:"type" json:"type" mapstructure:"type"`
-	Path string `yaml:"path" json:"path" mapstructure:"path"`
-	Data []byte `yaml:"data" json:"data" mapstructure:"data"`
+var DefaultIgnoreList = []string{
+	"^\\.",
+	"tpm-symphony-openapi\\.(yml|yaml)",
 }
 
-func (a Asset) IsZero() bool {
-	return a.Type == ""
+var OpenApiFileFindIncludeList = []string{
+	"tpm-symphony-openapi\\.(yml|yaml)",
 }
 
-type EndPointAsset struct {
-	Id string `yaml:"id" mapstructure:"id"`
-}
-
-type OrchestrationAsset struct {
-	ExecutionGraph Asset           `yaml:"exec-graph" mapstructure:"exec-graph"`
-	Endpoints      []EndPointAsset `yaml:"endpoints" mapstructure:"endpoints"`
-}
-
-func Crawl(cfg *Config) (Asset, []OrchestrationAsset, error) {
+func Crawl(cfg *Config) ([]OrchestrationRepo, error) {
 
 	fi, err := scan4OpenApiFiles(cfg.MountPoint)
-	if err != nil {
-		return Asset{}, nil, err
-	}
-
-	openApiPath := path.Join(cfg.MountPoint, fi.Name())
-	return Asset{Type: "open-api", Path: openApiPath}, nil, nil
-}
-
-var OpenapiFileRegexp = regexp.MustCompile("tpm-symphony-openapi\\.(yml|yaml)")
-
-func scan4OpenApiFiles(dir string) (os.FileInfo, error) {
-
-	fis, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, fi := range fis {
-		if !fi.IsDir() {
-			if OpenapiFileRegexp.Match([]byte(fi.Name())) {
-				return fi, nil
-			}
+	repos := make([]OrchestrationRepo, 0)
+	for _, f := range fi {
+		openApiPath := f
+		repo := OrchestrationRepo{
+			path:          path.Dir(openApiPath),
+			apiDefinition: Asset{Name: path.Base(openApiPath), Type: "open-api", Path: path.Base(openApiPath)},
 		}
+
+		assets, err := scan4AssetFiles(repo.path)
+		if err != nil {
+			return nil, err
+		}
+		repo.assets = assets
+
+		subFolders, err := util.FindFiles(repo.path, util.WithFindFileType(util.FileTypeDir), util.WithFindOptionIgnoreList(DefaultIgnoreList))
+		if err != nil {
+			return nil, err
+		}
+
+		m := make(map[string][]Asset, 0)
+		for _, fld := range subFolders {
+			fldName, assets, err := scan4OrchestrationFiles(fld)
+			if err != nil {
+				return nil, err
+			}
+
+			m[fldName] = assets
+		}
+
+		repo.orchestrations = m
+		repos = append(repos, repo)
 	}
 
-	return nil, nil
+	return repos, nil
+}
+
+func scan4OpenApiFiles(dir string) ([]string, error) {
+	files, err := util.FindFiles(dir, util.WithFindOptionNavigateSubDirs(), util.WithFindOptionIncludeList(OpenApiFileFindIncludeList))
+	if err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
+
+func scan4AssetFiles(dir string) ([]Asset, error) {
+	files, err := util.FindFiles(dir, util.WithFindFileType(util.FileTypeFile), util.WithFindOptionIgnoreList(DefaultIgnoreList))
+	if err != nil {
+		return nil, err
+	}
+
+	assets := make([]Asset, 0, len(files))
+	for _, a := range files {
+		assets = append(assets, Asset{Name: path.Base(a), Type: "else", Path: path.Base(a)})
+	}
+
+	return assets, nil
+}
+
+func scan4OrchestrationFiles(dir string) (string, []Asset, error) {
+	files, err := util.FindFiles(dir, util.WithFindFileType(util.FileTypeFile), util.WithFindOptionIgnoreList(DefaultIgnoreList))
+	if err != nil {
+		return "", nil, err
+	}
+
+	assets := make([]Asset, 0, len(files))
+	for _, a := range files {
+		assets = append(assets, Asset{Type: "else", Path: path.Join(path.Base(dir), path.Base(a))})
+	}
+
+	return path.Base(dir), assets, nil
 }

@@ -6,20 +6,25 @@ info:
     name: GECT-NG
     email: francesco.bisaccia@posteitaliane.it
   version: "1.0"
+servers:
+  - url: /api/v1
 paths:
-  "/api/v1/kit/cliente/{num_pratica}":
-    x-symphony:
-      # group-id: used for gin groups.
-      group-path: "/api/v1"
+  "/kit/cliente/{num_pratica}":
     get:
       x-symphony:
         # id: orchestration-id
-        id: "get-by-numero-pratica"
+        id: "spm-get-by-numero-pratica"
       description: retrieve  info of the last kit request by num_pratica
       tags:
         - kit cliente
       summary: retrieve  info of the last kit request by num_pratica
       parameters:
+        - description: qparam
+          name: p2
+          in: query
+          required: true
+          schema:
+            type: string
         - description: num_pratica the request
           name: num_pratica
           in: path
@@ -59,12 +64,13 @@ paths:
                 $ref: "#/components/schemas/response.InfoResponse"
               examples:
                 response:
+                  externalValue: "response400Error.tmpl"
                   value:
                     info:
                       details:
                         - code: request-validation
                           message: error message
-                          scope: GECT-NG
+                          scope: 27
                       requestId: 77451cfe-6d6b-46a9-942f-76bb844fd121
                       resultCode: PI_7W_400
                       resultMessage: Bad Request
@@ -105,12 +111,27 @@ paths:
     put:
       x-symphony:
         # id: orchestration-id
-        id: "put-by-numero-pratica"
+        id: "spm-put-by-numero-pratica"
       description: Update a previous request made on num-pratica.
       tags:
         - kit cliente
       summary: Update a previous request made on num-pratica.
       parameters:
+        - name: Content-Encoding
+          in: header
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+            enum:
+              - identity
+        - description: qparam
+          name: p2
+          in: query
+          required: true
+          schema:
+            type: string
         - description: num pratica to update
           name: num_pratica
           in: path
@@ -280,7 +301,7 @@ paths:
                       requestId: 27b10000-6bbd-4bb2-90ab-5d2e999ca8b6
                       resultCode: PI_7W_500
                       resultMessage: Internal Server Error
-  "/api/v1/kit/webtop/{user_id}":
+  "/kit/webtop/{user_id}":
     get:
       x-symphony:
         # id: orchestration-id
@@ -644,6 +665,8 @@ components:
           example: status
     api.KitRequest:
       type: object
+      required:
+        - ambito
       properties:
         ambito:
           type: string

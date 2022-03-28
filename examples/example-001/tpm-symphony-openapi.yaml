@@ -8,14 +8,14 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.14
 servers:
-- url: /
+- url: /api/v1
 tags:
 - name: sendNotification
 paths:
-  /v1/send_notification:
+  /send_notification:
     post:
       x-symphony:
-        id: "send-notification"
+        id: "spm-send-notification"
       tags:
       - sendNotification
       summary: Invio comunicazioni digitali

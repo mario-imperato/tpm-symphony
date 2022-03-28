@@ -1,0 +1,206 @@
+openapi: 3.0.1
+info:
+  title: BPAP Servizi Ricarica Orchestratore
+  description: Orchestratore Servizi Ricarica PostePay v1.0
+  version: '1.0'
+servers:
+  ## The url is the gin group of the orchestrations exposed by this file. It's a path type of url in the form /api/v1 and not a localhost type of reference
+  - url: /api/v1
+    description: Generated server url
+paths:
+  /verifica:
+    post:
+      ## Extension to indicate orchestration related infos.
+      x-symphony:
+        id: "spm-bpap-verifica"
+      tags:
+        - Verifica
+      summary: VERIFICA
+      operationId: verifica
+      parameters:
+        - name: requestId
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: trackId
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: debug
+          in: header
+          required: false
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificaRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificaResponse'
+        '400':
+          description: BadRequest/Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              ## The example section has the purpose in case of validation errors, to produce a templated response.
+              ## This response can  be in the examples.response.value or in the examples.response.externalValue referred file.encoding:
+              ## It can be done either way with some implications on the nature
+              examples:
+                response:
+                  externalValue: "responseValidationError.tmpl"
+                  value:
+                    step: "validation"
+                    code: "string"
+                    message: "string"
+                    description: "string"
+                    timestamp": 0
+        '500':
+          description: KO
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    Beneficiario:
+      required:
+        - intestazione
+        - numero
+      type: object
+      properties:
+        natura:
+          type: string
+        numero:
+          pattern: ^\d{1,9}$
+          type: string
+          description: Alias della carta da ricaricare
+        intestazione:
+          type: string
+        tipologia:
+          pattern: ^(ALIAS)$
+          type: string
+        codiceFiscale:
+          pattern: ^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$
+          type: string
+    Operazione:
+      required:
+        - descrizione
+        - divisa
+        - importo
+        - tipo
+      type: object
+      properties:
+        divisa:
+          maxLength: 3
+          minLength: 0
+          type: string
+          description: Valuta del movimento di ricarica
+          default: EUR
+        importo:
+          type: integer
+          description: Importo in centesimi di euro
+          format: int64
+        descrizione:
+          type: string
+          description: Descrizione estesa del movimento
+        tipo:
+          pattern: ^(STANDARD|P2P|RICORRENTE)$
+          type: string
+          description: |-
+            Valori: 
+            - STANDARD
+            - P2P
+            - RICORRENTE
+    Ordinante:
+      required:
+        - codiceFiscale
+        - natura
+        - numero
+      type: object
+      properties:
+        natura:
+          pattern: ^(CC|DR|DT|PP)$
+          type: string
+          description: |-
+            Valori: 
+            - CC - Conto
+            - DR - Libretti
+            - DT - DEBIT (Postamat)
+            - PP - Carta
+        numero:
+          pattern: ^\d{1,12}$
+          type: string
+          description: Alias della carta, rapporto o numero del libretto che ha effettuato la ricarica
+        codiceFiscale:
+          pattern: ^([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]|\d{11})$
+          type: string
+        tipologia:
+          type: string
+        intestazione:
+          type: string
+    VerificaRequest:
+      required:
+        - beneficiario
+        - canale
+        - operazione
+        - ordinante
+      type: object
+      properties:
+        canale:
+          type: string
+          description: |-
+            Valori: 
+            APBP
+            NPDB
+            APDB
+            APPP
+            BPOL
+            DGPT
+            PPAY
+            RPOL
+        beneficiario:
+          $ref: '#/components/schemas/Beneficiario'
+        ordinante:
+          $ref: '#/components/schemas/Ordinante'
+        operazione:
+          $ref: '#/components/schemas/Operazione'
+        additionalProperties:
+          type: object
+          additionalProperties:
+            type: object
+    VerificaResponse:
+      type: object
+      properties:
+        divisa:
+          type: string
+        importo:
+          type: integer
+          format: int64
+        commissione:
+          type: integer
+          format: int64
+    ErrorResponse:
+      type: object
+      properties:
+        step:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+        description:
+          type: string
+        timestamp:
+          type: integer
+          format: int64

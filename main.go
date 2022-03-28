@@ -60,7 +60,7 @@ func main() {
 	shutdownChannel := make(chan os.Signal, 1)
 	signal.Notify(shutdownChannel, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	s, err := httpsrv.NewServer(appCfg.Http, httpsrv.WithListenPort(9090), httpsrv.WithDocumentRoot("/www", "/tmp", false))
+	s, err := httpsrv.NewServer(appCfg.Http /* , httpsrv.WithListenPort(9090), httpsrv.WithDocumentRoot("/www", "/tmp", false) */)
 	if err != nil {
 		log.Fatal().Err(err).Send()
 	}

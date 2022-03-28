@@ -19,8 +19,7 @@ func TestLoadRegistry(t *testing.T) {
 	t.Logf("current directory: %s", path)
 
 	sarr := []string{
-		"../examples/example-001",
-		"../examples/example-002",
+		"../examples/ex-bpap-verifica",
 	}
 
 	for _, dir := range sarr {
