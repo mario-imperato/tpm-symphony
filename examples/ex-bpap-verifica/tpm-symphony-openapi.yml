@@ -60,11 +60,9 @@ paths:
                 response:
                   externalValue: "responseValidationError.tmpl"
                   value:
-                    step: "validation"
-                    code: "string"
+                    ambit: "validation"
                     message: "string"
-                    description: "string"
-                    timestamp": 0
+                    timestamp": "2022-03-28T12:55:03+02:00"
         '500':
           description: KO
           content:

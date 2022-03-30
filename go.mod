@@ -3,11 +3,11 @@ module tpm-symphony
 go 1.17
 
 require (
+	github.com/GPA-Gruppo-Progetti-Avanzati-SRL/tpm-common v0.0.10
 	github.com/GPA-Gruppo-Progetti-Avanzati-SRL/tpm-gin v0.0.6
 	github.com/getkin/kin-openapi v0.92.0
 	github.com/gin-gonic/gin v1.7.0
 	github.com/json-iterator/go v1.1.11
-	github.com/mario-imperato/tpm-common v0.0.8
 	github.com/rs/zerolog v1.26.1
 	github.com/stretchr/testify v1.7.1
 	gitlab.alm.poste.it/go/configuration v1.5.5
