@@ -12,7 +12,7 @@ paths:
     post:
       ## Extension to indicate orchestration related infos.
       x-symphony:
-        id: "spm-bpap-verifica"
+        id: "smp-bpap-verifica"
       tags:
         - Verifica
       summary: VERIFICA

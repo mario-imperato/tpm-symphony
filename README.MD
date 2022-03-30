@@ -1,5 +1,12 @@
 ## TPM-Symphony
 
+- [Introduzione](#introduzione)
+- [Architettura](#architettura)
+- [Esposizione end point](#esposizione-end-point)
+- [Crawler](#crawler)
+
+### Introduzione
+
 Obiettivo del progetto la realizzazione di un componente in grado di orchestrare le invocaioni a servizi Rest/Json ed esporre degli endpoint invocabili dall'esterno per l'attivazione di queste orchestrazioni.
 Il progetto ha un obiettivo di genericità e non vuole essere legato ad uno specifico scenario ma soddisfare, entro certi limiti, un numero diverso di use-case.
 Nella sua implementazione corrente ha l'obiettivo di coprire tutti i requisiti espressi in __come si chiama l'ambito attuale__ attraverso un approccio molto configurabile. Le esigenze espresse
@@ -12,17 +19,17 @@ prevedono la necessità di
 Il diagramma successivo mostra, nell'ambito del contesto corrente, come il microservizio (a sx) debba invocare in  parallelo 5 microservizi e poi eseguire successivamente le invocazioni di due microservizi ulteriori.
 Dalla figura, si evidenzia come alcuni di questi microservizi si appoggino su procedure mainframe e siano sostanzialmente dei wrapper.
 
-![Processo di verifica ricarica PostePay](REAME-files/processo-verifica-ricarica.png)
+![Processo di verifica ricarica PostePay](README-files/processo-verifica-ricarica.png)
 
 In alcuni degli scenari in ambito sono previste delle operazioni __dispositive__. Dal punto di vista dell'orchestrazione nulla cambia in quanto, anche gli elementi dispositivi saranno __wrappati__ e quindi riconducibili 
 all'interno di chiamate ad endpoint rest/json. Eventuali esigenze di transattività saranno gestite all'interno del singolo __wrapper__ come si chiarisce nella figura successiva nella quale un componente con
 un JBoss containerizzato chiama tre procedure mainframe in modalità XA.
 
-![Processo ricarica PostePay](REAME-files/processo-dispositiva.png)
+![Processo ricarica PostePay](README-files/processo-dispositiva.png)
 
 ### Architettura
 
-![Symphony architecture](REAME-files/symphony-architecture.png)
+![Symphony architecture](README-files/symphony-architecture.png)
 
 L'obiettivo del progetto è dunque quello di  mettere a disposizione un artefatto che possa adattarsi a use-case diversi dai processi in ambito mediante operazioni di configurazione.
 Da un punto di vista generale, il componente permette di esporre endpoint a partire da una descrizione degli stessi e di __eseguire__ un grafo orientato aciclico nel quale:
@@ -84,14 +91,14 @@ paths:
     post:
       ## Extension to indicate orchestration related infos.
       x-symphony:
-        id: "spm-bpap-verifica"
+        id: "smp-bpap-verifica"
       tags:
         - Verifica
       summary: VERIFICA
       operationId: verifica
 ```
 
-Nel frammento (tratto dall'esempio che stiamo illustrando) riportato qui sopra al path `/verifica` viene associato l'id `spm-bpap-verifica` che e' l'id della orchestrazione associata all'end-point.
+Nel frammento (tratto dall'esempio che stiamo illustrando) riportato qui sopra al path `/verifica` viene associato l'id `smp-bpap-verifica` che e' l'id della orchestrazione associata all'end-point.
 
 #### Validazione dell'input
 L'utilizzo dello standard open-api permette di definire in maniera condivisa le caratteristiche dell'endpoint esposto ma anche di eseguire le validazioni sull'input sulla base dei vincoli 
@@ -132,3 +139,14 @@ Stabilito quindi il meccanismo di validazione e di restituzione dell'errore, rim
 dove trova il file open-api che descrive l'input.
 
 ### Crawler
+Definiti gli aspetti di definizione dell'input esposto verso l'esterno, &egrave; necessario chiarire come queste definizioni (file open api, file esterni, etc...) sono organizzate perch&egrave;
+il software le trovi e le lavori. Il compito di __cercare__ queste configurazioni &egrave; delegato al __crawler__ che al momento prevede solo la modalit&agrave; __file__. In sostanza al 
+componente bisogna indicare una directory radice all'interno del quale andare a trovare i vari artefatti che verranno caricati all'interno di un registry.
+La figura successiva mostra i layout tipico di questa directory.
+
+![Crawler folder layout](README-files/crawler-folder-organization.png)
+
+- Come si vede dalla figura, la directory radice (grigio) e' strutturata in una o pi&ugrave; cartelle
+- In ogni sotto cartella (azzurra) è presente un file a nome definito (`tpm-symphony-openapi.yml`) e una serie di file variabili referenziati internamente dal file `tpm-symphony-openapi.yml` [^1]
+
+[^1]: Il nome &egrave; __fisso__ proprio per evitare che in una stessa cartella siano presenti pi&ugrave; file di definizione open api)
