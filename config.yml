@@ -20,7 +20,7 @@ config:
     #    html-content: /templates/*
 
     server-context:
-      path: /api
+      path: /bpap-servizi-pp
       context:
         sys-metrics-endpoint: /metrics
     mw-use:

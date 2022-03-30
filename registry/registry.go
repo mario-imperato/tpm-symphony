@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/GPA-Gruppo-Progetti-Avanzati-SRL/tpm-common/util"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/rs/zerolog/log"
 	"net/http"
+	"regexp"
 	"tpm-symphony/constants"
 	"tpm-symphony/registry/crawler"
 )
@@ -39,7 +41,7 @@ func LoadRegistry(cfg *Config) (*OrchestrationRegistry, error) {
 			return nil, err
 		}
 
-		err = doc.Validate(context.Background())
+		err = validateOpenapiDoc(doc)
 		if err != nil {
 			return nil, err
 		}
@@ -69,9 +71,28 @@ func LoadRegistry(cfg *Config) (*OrchestrationRegistry, error) {
 	return &theRegistry, nil
 }
 
+var ServersUrlPattern = regexp.MustCompile(`^(?:http|https)://[0-9a-zA-Z\.]*(?:\:[0-9]{2,4})?(.*)`)
+
+func validateOpenapiDoc(doc *openapi3.T) error {
+	err := doc.Validate(context.Background())
+	if err != nil {
+		return err
+	}
+
+	// Hack. In case the url is in the form http://localhost:8080/something... I reset to /something....
+	// This because otherwise the openapi3 lib doesn't match it.
+	if len(doc.Servers) > 0 {
+		u := util.ExtractCapturedGroupIfMatch(ServersUrlPattern, doc.Servers[0].URL)
+		doc.Servers[0].URL = u
+	}
+
+	return nil
+}
+
 func retrieveResourceGroup(doc *openapi3.T) ResourceGroup {
 	if len(doc.Servers) > 0 {
-		return ResourceGroup{Name: doc.Servers[0].URL, Path: doc.Servers[0].URL}
+		u := doc.Servers[0].URL
+		return ResourceGroup{Name: u, Path: u}
 	}
 
 	return ResourceGroup{}

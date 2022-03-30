@@ -73,6 +73,8 @@ github.com/DataDog/datadog-go v4.2.0+incompatible h1:Q73jzyKHwyA04Gf4SSukRF+KR4w
 github.com/DataDog/datadog-go v4.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/GPA-Gruppo-Progetti-Avanzati-SRL/tpm-common v0.0.10 h1:BxJkYpUo/WVfzaDW6G7gdWPNaxT/SXvFJ3GeRl9L7y8=
 github.com/GPA-Gruppo-Progetti-Avanzati-SRL/tpm-common v0.0.10/go.mod h1:1jyjVYIYEEnhTuD1yYrHZb5qDujt1BmKzzfuxzYOsE4=
+github.com/GPA-Gruppo-Progetti-Avanzati-SRL/tpm-common v0.0.11 h1:8cA/qS8a99H60Zpr9dyICQrsFIsNDvXsp95KKmn9HU8=
+github.com/GPA-Gruppo-Progetti-Avanzati-SRL/tpm-common v0.0.11/go.mod h1:1jyjVYIYEEnhTuD1yYrHZb5qDujt1BmKzzfuxzYOsE4=
 github.com/GPA-Gruppo-Progetti-Avanzati-SRL/tpm-gin v0.0.6 h1:fuMFJkLOFYAnwU215QWfCTwtqcaBG+8UddgeQe6rzto=
 github.com/GPA-Gruppo-Progetti-Avanzati-SRL/tpm-gin v0.0.6/go.mod h1:T4znTAS1fLfHyzh32J/+XH6dtx0uwQtd6/NS0mh+hu0=
 github.com/HdrHistogram/hdrhistogram-go v1.0.1/go.mod h1:BWJ+nMSHY3L41Zj7CA3uXnloDp7xxV0YvstAE7nKTaM=

@@ -5,10 +5,10 @@ info:
   version: '1.0'
 servers:
   ## The url is the gin group of the orchestrations exposed by this file. It's a path type of url in the form /api/v1 and not a localhost type of reference
-  - url: /api/v1
+  - url: http://localhost:8080/bpap-servizi-pp
     description: Generated server url
 paths:
-  /verifica:
+  /api/v1/verifica:
     post:
       ## Extension to indicate orchestration related infos.
       x-symphony:
