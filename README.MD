@@ -142,11 +142,25 @@ dove trova il file open-api che descrive l'input.
 Definiti gli aspetti di definizione dell'input esposto verso l'esterno, &egrave; necessario chiarire come queste definizioni (file open api, file esterni, etc...) sono organizzate perch&egrave;
 il software le trovi e le lavori. Il compito di __cercare__ queste configurazioni &egrave; delegato al __crawler__ che al momento prevede solo la modalit&agrave; __file__. In sostanza al 
 componente bisogna indicare una directory radice all'interno del quale andare a trovare i vari artefatti che verranno caricati all'interno di un registry.
+In termini logici possiamo dire che 
+
+- una istanza di symphony pu&ograve; gestire pi&ugrave; file open-api
+- ogni file open-api pu&ograve; definire pi&ugrave; __path__ e quindi permettere l'associazione di pi&ugrave; orchestrazioni.
+
 La figura successiva mostra i layout tipico di questa directory.
 
 ![Crawler folder layout](README-files/crawler-folder-organization.png)
 
 - Come si vede dalla figura, la directory radice (grigio) e' strutturata in una o pi&ugrave; cartelle
 - In ogni sotto cartella (azzurra) è presente un file a nome definito (`tpm-symphony-openapi.yml`) e una serie di file variabili referenziati internamente dal file `tpm-symphony-openapi.yml` [^1]
+- All'interno del livello azzurro sono presenti le sotto cartelle delle singole orchestrazioni. Il nome di queste sotto cartelle &egrave; l'identificativo della orchstrazione cos&igrave; come riportato nella sezione 
+`x-symphony` del __path__ presente nel file open-api
+- All'interno della cartella di ogni singola orchestrazione sono presenti tutti i file che riguardano l'orchestrazione. E' presente il file principale, anche questo a nome definito (`tpm-symphony-orchestration.yml`), 
+e file secondari referenziati internamente. Le orchestrazioni non hanno dipendenze tra loro. Ogni orchestrazione (e quindi ogni sotto cartella associata) contiene tutti gli artefatti necessari per la sua esecuzione. 
+
+Da quanto detto ne discende che, nel caso si vogliano esporre due orchestrazioni, è possibile scegliere liberamente tra 
+
+- avere **due** sotto cartelle di livello azzurro, ognuna contenente **un** file `tpm-symphony-openapi.yml` che referenzia **una** singola orchestrazione e avere **una** singola sotto cartella verde per la orchestrazione in questione.
+- avere **una** singola cartelle di livello azzurro, con **un** singolo file `tpm-symphony-openapi.yml` nel quale sono presenti **due** __path__ associati alle due orchestrazioni e disporre di **due** cartelle di livello verde.
 
 [^1]: Il nome &egrave; __fisso__ proprio per evitare che in una stessa cartella siano presenti pi&ugrave; file di definizione open api)
