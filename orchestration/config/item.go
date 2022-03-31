@@ -1,24 +1,32 @@
 package config
 
-type ActivityItem interface {
+type Type string
+
+const (
+	StartActivityType Type = "start-activity"
+	EchoActivityType  Type = "echo-activity"
+	EndActivityType   Type = "end-activity"
+)
+
+type Configurable interface {
 	Name() string
-	ActivityType() string
+	Type() Type
 }
 
-type Item struct {
+type Activity struct {
 	Nm string `yaml:"name,omitempty" mapstructure:"name,omitempty" json:"name,omitempty"`
-	Tp string `yaml:"type,omitempty" mapstructure:"type,omitempty" json:"type,omitempty"`
+	Tp Type   `yaml:"type,omitempty" mapstructure:"type,omitempty" json:"type,omitempty"`
 }
 
-func (c *Item) WithName(n string) *Item {
+func (c *Activity) WithName(n string) *Activity {
 	c.Nm = n
 	return c
 }
 
-func (c *Item) Name() string {
+func (c *Activity) Name() string {
 	return c.Nm
 }
 
-func (c *Item) ActivityType() string {
+func (c *Activity) Type() Type {
 	return c.Tp
 }

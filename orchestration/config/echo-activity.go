@@ -1,11 +1,7 @@
 package config
 
-const (
-	EchoActivityType = "echo-activity"
-)
-
 type EchoActivity struct {
-	Item
+	Activity
 	Message string `yaml:"message,omitempty" mapstructure:"message,omitempty" json:"message,omitempty"`
 }
 

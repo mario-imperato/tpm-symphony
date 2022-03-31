@@ -1,11 +1,7 @@
 package config
 
-const (
-	StartActivityType = "start-activity"
-)
-
 type StartActivity struct {
-	Item
+	Activity
 	StartAProperty string `yaml:"property,omitempty" mapstructure:"property,omitempty" json:"property,omitempty"`
 }
 

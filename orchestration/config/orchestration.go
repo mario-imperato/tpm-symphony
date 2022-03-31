@@ -6,16 +6,23 @@ import (
 )
 
 type Orchestration struct {
+	StartActivity string            `json:"-"`
 	Paths         []Path            `yaml:"paths,omitempty" mapstructure:"paths,omitempty" json:"paths,omitempty"`
-	Activities    []ActivityItem    `json:"-"`
+	Activities    []Configurable    `json:"-"`
 	RawActivities []json.RawMessage `json:"activities"`
+}
+
+func NewOrchestration(id string, data []byte) (Orchestration, error) {
+	o := Orchestration{}
+	err := json.Unmarshal(data, &o)
+	return o, err
 }
 
 func (o *Orchestration) ToJSON() ([]byte, error) {
 	return json.Marshal(o)
 }
 
-func (o *Orchestration) FindActivityByName(n string) ActivityItem {
+func (o *Orchestration) FindActivityByName(n string) Configurable {
 	for _, a := range o.Activities {
 		if a.Name() == n {
 			return a
@@ -25,10 +32,16 @@ func (o *Orchestration) FindActivityByName(n string) ActivityItem {
 	return nil
 }
 
-func (o *Orchestration) AddActivity(a ActivityItem) error {
+func (o *Orchestration) AddActivity(a Configurable) error {
 
 	if o.FindActivityByName(a.Name()) != nil {
 		return fmt.Errorf("activity with the same id already present (id: %s)", a.Name())
+	}
+
+	if a.Type() == StartActivityType && o.StartActivity != "" {
+		return fmt.Errorf("dup start activity (current: %s, dup: %s)", o.StartActivity, a.Name())
+	} else {
+		o.StartActivity = a.Name()
 	}
 
 	o.Activities = append(o.Activities, a)
@@ -65,25 +78,27 @@ func (o *Orchestration) UnmarshalJSON(b []byte) error {
 	}
 
 	for _, raw := range o.RawActivities {
-		var v Item
+		var v Activity
 		err = json.Unmarshal(raw, &v)
 		if err != nil {
 			return err
 		}
-		var i ActivityItem
-		switch v.ActivityType() {
+		var i Configurable
+		switch v.Type() {
 		case StartActivityType:
 			i = NewStartActivity()
 		case EchoActivityType:
 			i = NewEchoActivity()
+		case EndActivityType:
+			i = NewEndActivity()
 		default:
-			return fmt.Errorf("unknown activity type %s", v.ActivityType())
+			return fmt.Errorf("unknown activity type %s", v.Type())
 		}
 		err = json.Unmarshal(raw, i)
 		if err != nil {
 			return err
 		}
-		o.Activities = append(o.Activities, i)
+		o.AddActivity(i)
 	}
 	return nil
 }

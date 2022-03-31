@@ -1,12 +1,13 @@
-package config_test
+package executable_test
 
 import (
 	"github.com/stretchr/testify/require"
 	"testing"
 	"tpm-symphony/orchestration/config"
+	"tpm-symphony/orchestration/executable"
 )
 
-func TestConfig(t *testing.T) {
+func TestNewOrchestration(t *testing.T) {
 
 	// Serialization
 	sa := config.NewStartActivity().WithName("start-name")
@@ -17,27 +18,23 @@ func TestConfig(t *testing.T) {
 
 	ea2 := config.NewEndActivity().WithName("end-name")
 
-	orch := config.Orchestration{
+	cfgOrc := config.Orchestration{
 		Activities: []config.Configurable{
 			sa, ea, ea2,
 		},
 	}
 
-	err := orch.AddPath("start-name", "echo-name")
+	err := cfgOrc.AddPath("start-name", "echo-name")
 	require.NoError(t, err)
 
-	err = orch.AddPath("echo-name", "end-name")
+	err = cfgOrc.AddPath("echo-name", "end-name")
 	require.NoError(t, err)
 
-	b, err := orch.ToJSON()
-	require.NoError(t, err)
-	t.Log(string(b))
-
-	// Deserialization
-	orch2, err := config.NewOrchestration("", b)
+	orc, err := executable.NewOrchestration(&cfgOrc)
 	require.NoError(t, err)
 
-	b, err = orch2.ToJSON()
-	require.NoError(t, err)
-	t.Log(string(b))
+	if !orc.IsValid() {
+		t.Error("orchestration is invalid")
+	}
+	t.Log(orc)
 }
